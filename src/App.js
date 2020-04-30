@@ -110,13 +110,10 @@ class App extends React.Component {
                     />
                     <ImageLinkForm 
                       onInputChange={ this.onInputChange } 
-                      onButtonSubmit={ this.onButtonSubmit } 
+                      onButtonSubmit={ this.onButtonSubmit }
                     />
                   </Col>
 
-                  <br />
-                  <br />
-                  
                   <Col style={{ alignItems: "center" }} xs={12} sm={6}>
                     <div>
                       <img 
