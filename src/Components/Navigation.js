@@ -2,7 +2,7 @@ import React from 'react';
 import Button from 'react-bootstrap/Button';
 import Logo from '../assets/Logo.png';
 
-const Navigation = ({ onRouteChange }) => {
+const Navigation = ({ onRouteChange, isSignedIn }) => {
     const navStyle = {
         height: "60px",
         width: "100%",
@@ -16,7 +16,11 @@ const Navigation = ({ onRouteChange }) => {
     return (
         <div style={navStyle}>
             <img alt="" src={Logo} width="160px" />
-            <Button variant="outline-danger" className="float-right" onClick={() => onRouteChange('signin')}>Sign Out</Button>
+            
+            {isSignedIn 
+            ? <Button variant="outline-danger" className="float-right" onClick={() => onRouteChange('signin')}>Sign Out</Button>
+            : <div></div>
+            }   
         </div>
     )
 }

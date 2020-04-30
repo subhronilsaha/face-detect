@@ -1,12 +1,41 @@
-import React from 'react';
+import React,  { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import './SignIn.css';
 
 const SignIn = ({ onRouteChange }) => {
-
+    /* -- CSS STYLE -- */
     const centerify = {
         display: "flex", 
         justifyContent: "center", 
+    }
+
+    /* -- FORM DETAILS -- */
+    const [signInEmail, setEmail] = useState('');
+    const [signInPassword, setPassword] = useState('');
+
+    const onEmailChange = (e) => {
+      setEmail(e.target.value);
+    }
+
+    const onPasswordChange = (e) => {
+        setPassword(e.target.value);
+    }
+
+    const onSubmit = () => {
+        fetch('http://localhost:3000/signin', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                email: signInEmail,
+                password: signInPassword
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data === 'success') {
+                    onRouteChange('home')
+                }
+            })
     }
 
     return (
@@ -22,6 +51,7 @@ const SignIn = ({ onRouteChange }) => {
                     type="text" 
                     placeholder="Enter Email" 
                     name="email"
+                    onChange={ onEmailChange }
                 />
                 
                 <br />
@@ -31,7 +61,7 @@ const SignIn = ({ onRouteChange }) => {
                     type="password" 
                     placeholder="Enter Password" 
                     name="psw" 
-                    required 
+                    onChange={ onPasswordChange }
                 />
                     
                 <br />
@@ -54,8 +84,7 @@ const SignIn = ({ onRouteChange }) => {
                 <Button 
                     variant="primary" 
                     type="submit"
-                    onClick={() => onRouteChange('home')}
-                    disabled
+                    onClick={ onSubmit }
                 >
                     Submit
                 </Button>

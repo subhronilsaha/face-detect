@@ -14,7 +14,7 @@ import Loader from './Components/Loader';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
-const app = new Clarifai.App({
+const app = new Clarifai.App({ // Clarifai App
   apiKey: 'edde4e65d57d4ae5b35aeab79b52cfb1'
 });
 
@@ -27,23 +27,46 @@ class App extends React.Component {
       boxes: [], 
       route: 'register', 
       faces: 0, 
-      name: '',
-      bgImageLoaded: false
+      bgImageLoaded: false,
+      user: {
+        id: 0,
+        name: "",
+        email: "",
+        password: "",
+        joined: '',
+        entries: 0
+      }
     }
   }
 
+  // -- UPDATE USER DETAILS
+  loadUser = userData => {
+    this.setState({user: {
+      id: userData.id,
+      name: userData.name,
+      email: userData.email,
+      password: userData.password,
+      joined: userData.joined,
+      entries: 0
+    }});
+
+    console.log('Current User:', this.state.user);
+  }
+
+  // -- BACKGROUND IMAGE LOADER FUNCTION
   onImageLoad = () => {
     this.setState({bgImageLoaded: true});
   }
 
+  // -- IMAGE LINK UPDATE
   onInputChange = (event) => {
     this.setState({input: event.target.value});
   }
 
+  // -- FACE RECOGNITION FUNCTIONS
   calculateNumberOfFaces = (data) => {
     const numberOfFaces = data.outputs[0].data.regions.length;
-    this.setState({ faces: numberOfFaces });
-    console.log(numberOfFaces);
+    this.setState({ faces: numberOfFaces}); //console.log(numberOfFaces);
     return numberOfFaces;
   }
 
@@ -62,33 +85,58 @@ class App extends React.Component {
     }
   }
 
+  displayFaceBox = response => {
+    const numberOfFaces = this.calculateNumberOfFaces(response);
+    var boxes = [];
+
+    var i;
+    for(i = 0; i<numberOfFaces; i++) {
+      const box = this.calculateFaceLocation(response, i);
+      boxes.push(box);
+      console.log(boxes);
+    }
+
+    this.setState({ boxes: boxes });
+  }
+
   onButtonSubmit = () => {
-    this.setState({imageUrl: this.state.input})
+    this.setState({imageUrl: this.state.input});
+
     app.models
       .predict(
         Clarifai.FACE_DETECT_MODEL, 
         this.state.input
       )
-      .then(response => {
-        const numberOfFaces = this.calculateNumberOfFaces(response);
-        var boxes = [];
-        var i;
-        for(i = 0; i<numberOfFaces; i++) {
-          const box = this.calculateFaceLocation(response, i);
-          boxes.push(box);
-          console.log(boxes);
-        }
-        this.setState({ boxes: boxes });
+      .then(response => { 
+        fetch('http://localhost:3000/image', {
+            method: 'put',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                id: this.state.user.id
+            })
+        })
+          .then(res => res.json())
+          .then(count => {
+            this.setState({ user: {
+              entries: count
+            }})
+          })
+
+        this.displayFaceBox(response)
       })
       .catch((err) => console.log(err));  
   }
 
+  // -- ROUTE CHANGE FUNCTION
   onRouteChange = (route) => {
-    this.setState({ route: route });
-  }
+    if (route === "home") {
+      this.setState({isSignedIn: true}); 
+    }
+    else {
+      this.setState({isSignedIn: false});
+    }
 
-  onNameSubmit = (event) => {
-    this.setState({ name: event.target.value });
+    this.setState({ route: route });
   }
 
   render() {
@@ -101,7 +149,7 @@ class App extends React.Component {
     return (
       <div className="App">
         <Container fluid="true" style={{margin: 0, padding: 0}}>
-          <Navigation onRouteChange={this.onRouteChange} />
+          <Navigation onRouteChange={this.onRouteChange} isSignedIn={this.state.isSignedIn} />
 
           <div style={{position: "absolute", top: 0, left: 0}}>
             <img 
@@ -118,8 +166,8 @@ class App extends React.Component {
                   <Row style={HomePageStyle}>
                     <Col xs={12} sm={6}>
                       <UserScore 
-                        name={ this.state.name }
-                        faces={ this.state.faces } 
+                        name={ this.state.user.name }
+                        faces={ this.state.user.entries } 
                       />
                       <ImageLinkForm 
                         onInputChange={ this.onInputChange } 
@@ -153,7 +201,7 @@ class App extends React.Component {
                     />
                   : <Register 
                       onRouteChange={ this.onRouteChange } 
-                      onNameSubmit={ this.onNameSubmit } 
+                      loadUser= { this.loadUser }
                     />)
               )
             : <Loader /> 

@@ -2,26 +2,47 @@ import React, { useState } from 'react'
 import Button from 'react-bootstrap/Button';
 import "../Sign In/SignIn.css";
 
-const Register = ({ onRouteChange, onNameSubmit }) => {   
-    
-    const [input, setInput] = useState(false);
+const Register = ({ onRouteChange, loadUser }) => {   
 
     const centerify = {
         display: "flex", 
         justifyContent: "center", 
     }
+    
+    /* -- FORM VALIDATION -- */
+    const [signInName, setName] = useState('');
+    const [signInEmail, setEmail] = useState('');
+    const [signInPassword, setPassword] = useState('');
 
-    function checkInputs(e) {
-        // Form Validation
-        let name = e.target.value;
+    const onNameChange = (e) => {
+        setName(e.target.value);
+    }
+    
+    const onEmailChange = (e) => {
+        setEmail(e.target.value);
+    }
 
-        if (name === '' || name === ' ') {
-            setInput(false)
-        } else {
-            setInput(true)
-        }
+    const onPasswordChange = (e) => {
+        setPassword(e.target.value);
+    }
 
-        onNameSubmit(e);
+    const onSubmit = () => {
+        fetch('http://localhost:3000/register', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: signInName,
+                email: signInEmail,
+                password: signInPassword,
+            })
+        })
+            .then(res => res.json())
+            .then(user => {
+                if (user) {
+                    loadUser(user);
+                    onRouteChange('home');
+                }
+            })
     }
 
     return (
@@ -37,19 +58,29 @@ const Register = ({ onRouteChange, onNameSubmit }) => {
                     type="text" 
                     placeholder="Enter Name" 
                     name="name" 
-                    onChange= {checkInputs}
+                    onChange= { onNameChange }
                     required 
                 />
 
                 <br />
 
                 <label><b>Email</b></label>
-                <input type="text" placeholder="Enter Email" name="email" required />
+                <input 
+                    type="text" 
+                    placeholder="Enter Email" 
+                    name="email" 
+                    onChange= { onEmailChange }
+                />
                 
                 <br />
 
                 <label><b>Password</b></label>
-                <input type="password" placeholder="Enter Password" name="psw" required />
+                <input 
+                    type="password" 
+                    placeholder="Enter Password" 
+                    name="psw" 
+                    onChange= { onPasswordChange }
+                />
                     
                 <br />
                 <br />
@@ -71,8 +102,7 @@ const Register = ({ onRouteChange, onNameSubmit }) => {
                 <Button 
                     variant="primary" 
                     type="submit"
-                    onClick={() => onRouteChange('home')}
-                    disabled = {input ? false : true}
+                    onClick={ onSubmit }
                 >
                     Submit
                 </Button>
