@@ -24,7 +24,7 @@ class App extends React.Component {
       input: '',
       imageUrl: '',
       boxes: [], 
-      route: 'signin', 
+      route: 'register', 
       faces: 0, 
       name: ''
     }
