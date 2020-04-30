@@ -113,6 +113,10 @@ class App extends React.Component {
                       onButtonSubmit={ this.onButtonSubmit } 
                     />
                   </Col>
+
+                  <br />
+                  <br />
+                  
                   <Col style={{ alignItems: "center" }} xs={12} sm={6}>
                     <div>
                       <img 
