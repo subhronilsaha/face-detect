@@ -10,6 +10,7 @@ import UserScore from './Components/UserScore';
 import ImageLinkForm from './Components/ImageLinkForm/ImageLinkForm';
 import FaceRecognition from './Components/Face Recognition/FaceRecognition';
 import bgImg from './assets/bg-img.jpg';
+import Loader from './Components/Loader';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -26,8 +27,13 @@ class App extends React.Component {
       boxes: [], 
       route: 'register', 
       faces: 0, 
-      name: ''
+      name: '',
+      bgImageLoaded: false
     }
+  }
+
+  onImageLoad = () => {
+    this.setState({bgImageLoaded: true});
   }
 
   onInputChange = (event) => {
@@ -96,52 +102,61 @@ class App extends React.Component {
       <div className="App">
         <Container fluid="true" style={{margin: 0, padding: 0}}>
           <Navigation onRouteChange={this.onRouteChange} />
+
           <div style={{position: "absolute", top: 0, left: 0}}>
-            <img src={bgImg} alt="" className="background-img" />
+            <img 
+              src={bgImg} 
+              alt="" 
+              className="background-img" 
+              onLoad= {this.onImageLoad.bind(this)}
+            />
           </div>
 
-          {this.state.route === 'home' 
-              ? <Container> 
-                <Row style={HomePageStyle}>
-                  <Col xs={12} sm={6}>
-                    <UserScore 
-                      name={ this.state.name }
-                      faces={ this.state.faces } 
-                    />
-                    <ImageLinkForm 
-                      onInputChange={ this.onInputChange } 
-                      onButtonSubmit={ this.onButtonSubmit }
-                    />
-                  </Col>
-
-                  <Col style={{ alignItems: "center" }} xs={12} sm={6}>
-                    <div>
-                      <img 
-                        id="inputImage" 
-                        className="image-received"
-                        alt='' src={this.state.imageUrl}
+          {this.state.bgImageLoaded
+            ? (this.state.route === 'home' 
+                ? <Container> 
+                  <Row style={HomePageStyle}>
+                    <Col xs={12} sm={6}>
+                      <UserScore 
+                        name={ this.state.name }
+                        faces={ this.state.faces } 
                       />
-                      {this.state.boxes.map((box, index) => {
-                        return (
-                          <FaceRecognition 
-                            box={box} 
-                            key={index}
-                          /> 
-                        )
-                      })}
-                    </div>
-                  </Col>
-                </Row>
-              </Container>
+                      <ImageLinkForm 
+                        onInputChange={ this.onInputChange } 
+                        onButtonSubmit={ this.onButtonSubmit }
+                      />
+                    </Col>
 
-            : (this.state.route === 'signin' 
-                ? <SignIn 
-                    onRouteChange={ this.onRouteChange } 
-                  />
-                : <Register 
-                    onRouteChange={ this.onRouteChange } 
-                    onNameSubmit={ this.onNameSubmit } 
-                  />)
+                    <Col style={{ alignItems: "center" }} xs={12} sm={6}>
+                      <div>
+                        <img 
+                          id="inputImage" 
+                          className="image-received"
+                          alt='' src={this.state.imageUrl}
+                        />
+                        {this.state.boxes.map((box, index) => {
+                          return (
+                            <FaceRecognition 
+                              box={box} 
+                              key={index}
+                            /> 
+                          )
+                        })}
+                      </div>
+                    </Col>
+                  </Row>
+                </Container>
+
+              : (this.state.route === 'signin' 
+                  ? <SignIn 
+                      onRouteChange={ this.onRouteChange } 
+                    />
+                  : <Register 
+                      onRouteChange={ this.onRouteChange } 
+                      onNameSubmit={ this.onNameSubmit } 
+                    />)
+              )
+            : <Loader /> 
           }
         </Container>
       </div>
