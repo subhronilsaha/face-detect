@@ -1,5 +1,4 @@
 import React from 'react';
-import Clarifai from 'clarifai';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -8,26 +7,42 @@ import SignIn from './Components/Sign In/SignIn';
 import Register from './Components/Register/Register';
 import UserScore from './Components/UserScore';
 import ImageLinkForm from './Components/ImageLinkForm/ImageLinkForm';
+import UserStats from './Components/UserStats';
 import FaceRecognition from './Components/Face Recognition/FaceRecognition';
 import bgImg from './assets/bg-img.jpg';
 import Loader from './Components/Loader';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
-const app = new Clarifai.App({ // Clarifai App
-  apiKey: 'edde4e65d57d4ae5b35aeab79b52cfb1'
-});
+const initialState = {
+      bgImageLoaded: true,
+      route: 'register', 
+      isSignedIn: false,
+      input: '',
+      imageUrl: '',
+      boxes: [], 
+      faces: 0, 
+      user: {
+        id: 0,
+        name: "",
+        email: "",
+        password: "",
+        joined: '',
+        entries: 0
+      }
+}
 
 class App extends React.Component {
   constructor() {
     super();
     this.state = {
+      bgImageLoaded: false,
+      route: 'register', 
+      isSignedIn: false,
       input: '',
       imageUrl: '',
       boxes: [], 
-      route: 'register', 
       faces: 0, 
-      bgImageLoaded: false,
       user: {
         id: 0,
         name: "",
@@ -41,13 +56,12 @@ class App extends React.Component {
 
   // -- UPDATE USER DETAILS
   loadUser = userData => {
-    this.setState({user: {
+    this.setState({ user: {
       id: userData.id,
       name: userData.name,
       email: userData.email,
-      password: userData.password,
       joined: userData.joined,
-      entries: 0
+      entries: userData.entries
     }});
 
     console.log('Current User:', this.state.user);
@@ -55,12 +69,12 @@ class App extends React.Component {
 
   // -- BACKGROUND IMAGE LOADER FUNCTION
   onImageLoad = () => {
-    this.setState({bgImageLoaded: true});
+    this.setState({ bgImageLoaded: true });
   }
 
   // -- IMAGE LINK UPDATE
   onInputChange = (event) => {
-    this.setState({input: event.target.value});
+    this.setState({ input: event.target.value });
   }
 
   // -- FACE RECOGNITION FUNCTIONS
@@ -73,15 +87,22 @@ class App extends React.Component {
   calculateFaceLocation = (data, index) => {
     const clarafaiFace = data.outputs[0].data.regions[index].region_info.bounding_box;
     const image = document.getElementById('inputImage');
+    const imageContainer = document.getElementById('image-container');
     const imageWidth = Number(image.width);
-    const imageHeight = Number(image.height);
-    console.log(imageHeight, imageWidth);
+    const imageHeight = Number(image.height); 
+    const containerWidth = Number(imageContainer.clientWidth);
+    const containerHeight = Number(imageContainer.clientHeight);
+    const offsetX = containerWidth - imageWidth;
+    const offsetY = containerHeight - imageHeight; 
+    const padding = 15;  
+
+    console.log(imageHeight, containerHeight,imageWidth, containerWidth);
 
     return {
-      leftCol: clarafaiFace.left_col * imageWidth,
+      leftCol: clarafaiFace.left_col * imageWidth + padding,
       topRow: clarafaiFace.top_row * imageHeight,
-      rightCol: imageWidth - (clarafaiFace.right_col * imageWidth),
-      bottomRow: imageHeight - (clarafaiFace.bottom_row * imageHeight)
+      rightCol: (imageWidth - (clarafaiFace.right_col * imageWidth)) + (offsetX - padding),
+      bottomRow: (imageHeight - (clarafaiFace.bottom_row * imageHeight)) + (offsetY - padding)
     }
   }
 
@@ -90,36 +111,37 @@ class App extends React.Component {
     var boxes = [];
 
     var i;
-    for(i = 0; i<numberOfFaces; i++) {
+    for(i = 0; i < numberOfFaces; i++) {
       const box = this.calculateFaceLocation(response, i);
-      boxes.push(box);
-      console.log(boxes);
+      boxes.push(box); //console.log(boxes);
     }
 
     this.setState({ boxes: boxes });
   }
 
-  onButtonSubmit = () => {
-    this.setState({imageUrl: this.state.input});
+  onPictureSubmit = () => {
+    this.setState({ imageUrl: this.state.input });
 
-    app.models
-      .predict(
-        Clarifai.FACE_DETECT_MODEL, 
-        this.state.input
-      )
+    fetch('https://shielded-cove-90316.herokuapp.com/imageURL', {
+      method: 'post',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+          input: this.state.input
+      })
+    })
+      .then(response => response.json())
       .then(response => { 
-        fetch('http://localhost:3000/image', {
+        fetch('https://shielded-cove-90316.herokuapp.com/image', {
             method: 'put',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 id: this.state.user.id
             })
         })
           .then(res => res.json())
           .then(count => {
-            this.setState({ user: {
-              entries: count
-            }})
+            this.setState(Object.assign(this.state.user, {entries: count}));
+            console.log('User stats: ', this.state.user );
           })
 
         this.displayFaceBox(response)
@@ -129,13 +151,14 @@ class App extends React.Component {
 
   // -- ROUTE CHANGE FUNCTION
   onRouteChange = (route) => {
-    if (route === "home") {
-      this.setState({isSignedIn: true}); 
+    if (route === "home") { // Sign in state validation
+      this.setState({ isSignedIn: true });      
     }
     else {
-      this.setState({isSignedIn: false});
+      this.setState( initialState );
     }
 
+    // Change Routes
     this.setState({ route: route });
   }
 
@@ -156,7 +179,7 @@ class App extends React.Component {
               src={bgImg} 
               alt="" 
               className="background-img" 
-              onLoad= {this.onImageLoad.bind(this)}
+              onLoad= {this.onImageLoad}
             />
           </div>
 
@@ -167,15 +190,18 @@ class App extends React.Component {
                     <Col xs={12} sm={6}>
                       <UserScore 
                         name={ this.state.user.name }
-                        faces={ this.state.user.entries } 
+                        faces={ this.state.faces } 
+                      />
+                      <UserStats 
+                        userEntries = { this.state.user.entries }
                       />
                       <ImageLinkForm 
                         onInputChange={ this.onInputChange } 
-                        onButtonSubmit={ this.onButtonSubmit }
+                        onButtonSubmit={ this.onPictureSubmit }
                       />
                     </Col>
 
-                    <Col style={{ alignItems: "center" }} xs={12} sm={6}>
+                    <Col id="image-container" style={{ alignItems: "center" }} xs={12} sm={6}>
                       <div>
                         <img 
                           id="inputImage" 
@@ -198,6 +224,7 @@ class App extends React.Component {
               : (this.state.route === 'signin' 
                   ? <SignIn 
                       onRouteChange={ this.onRouteChange } 
+                      loadUser= { this.loadUser }
                     />
                   : <Register 
                       onRouteChange={ this.onRouteChange } 

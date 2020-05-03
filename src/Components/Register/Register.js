@@ -25,9 +25,9 @@ const Register = ({ onRouteChange, loadUser }) => {
     const onPasswordChange = (e) => {
         setPassword(e.target.value);
     }
-
+    
     const onSubmit = () => {
-        fetch('http://localhost:3000/register', {
+        fetch('https://shielded-cove-90316.herokuapp.com/register', {
             method: 'post',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({

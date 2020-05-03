@@ -2,7 +2,7 @@ import React,  { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import './SignIn.css';
 
-const SignIn = ({ onRouteChange }) => {
+const SignIn = ({ onRouteChange, loadUser }) => {
     /* -- CSS STYLE -- */
     const centerify = {
         display: "flex", 
@@ -22,7 +22,7 @@ const SignIn = ({ onRouteChange }) => {
     }
 
     const onSubmit = () => {
-        fetch('http://localhost:3000/signin', {
+        fetch('https://shielded-cove-90316.herokuapp.com/signin', {
             method: 'post',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -31,11 +31,13 @@ const SignIn = ({ onRouteChange }) => {
             })
         })
             .then(res => res.json())
-            .then(data => {
-                if (data === 'success') {
+            .then(user => {
+                if (user.id) {
+                    loadUser(user);
                     onRouteChange('home')
                 }
             })
+            .catch(err => console.log(err))
     }
 
     return (
