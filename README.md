@@ -1,6 +1,6 @@
 # Face Detection Implementation using ReactJS and Clarifai API
 
-### URL: https://focused-volhard-864483.netlify.app/
+### URL: https://face-detecter.netlify.app/
 
 This is an implementation of a face detection software in React hooked to the Clarifai Face Detection Model API. 
 
